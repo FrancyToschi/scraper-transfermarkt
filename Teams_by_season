@@ -84,13 +84,6 @@ def get_squad_urls(url):
 
     return squad_urls
 
-# 🔹 ESEMPIO DI UTILIZZO:
-url = "https://www.transfermarkt.com/premier-league/startseite/wettbewerb/GB1"  # Cambia con un URL valido
-squad_urls = get_squad_urls(url)
-
-# Stampa i link trovati
-for squad_url in squad_urls:
-    print(squad_url)
 #Funzione per il valore
 def parse_currency_value(value_string):
     numeric_string = value_string.replace("€", "").replace(",", "").replace(".00", "")
@@ -102,6 +95,7 @@ def parse_currency_value(value_string):
         raise ValueError("Invalid currency format")
     return numeric_value
 #Estrarre Info per campionato e stagione
+
 # 🔹 Imposta stagioni e campionati da analizzare
 years = ['2010', '2011','2012', '2013','2014', '2015','2016', '2017',
          '2018', '2019','2020', '2021','2022', '2023','2024']
@@ -229,44 +223,26 @@ df.head()
 csv_path = "/content/drive/MyDrive/PROJECT WORK/RAW_DATA/Teams_by_Season.csv"
 df.to_csv(csv_path, index=False, encoding="utf-8")
 
-#Caricamento dati su S3
+
+# ✅ Crea il client S3 utilizzando il ruolo IAM dell'istanza EC2 (NON SERVONO CHIAVI!)
 import boto3
 import os
 
-# RIMOSSE le linee con AWS_ACCESS_KEY_ID e AWS_SECRET_ACCESS_KEY
-# Lasciamo solo la regione, se vuoi fissarla:
-AWS_REGION = "us-east-1"
+s3 = boto3.client("s3", region_name="us-east-1")
 
-# Se userai un IAM Role, puoi inizializzare così:
-s3 = boto3.client(
-    "s3",
-    region_name=AWS_REGION
-)
-
-
-# 🔄 Testa la connessione elencando i tuoi bucket
-buckets = s3.list_buckets()
-print("✅ Connessione riuscita! Ecco i tuoi bucket:")
-for bucket in buckets["Buckets"]:
-    print(f"- {bucket['Name']}")
 # Configurazione AWS S3
 S3_BUCKET_NAME = "transfermarkt-raw-data-2025"
 S3_FOLDER_PATH = "Teams-by-season/"  # Percorso su S3
-# 🔹 Inizializza il client S3 con credenziali esplicite
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
-)
+csv_path = "Teams_by_Season.csv"  # Percorso del file da caricare
 
 # 🔄 Verifica se il file esiste
 if not os.path.exists(csv_path):
     print(f"❌ Il file {csv_path} non esiste! Assicurati di averlo salvato prima di caricarlo.")
 else:
     try:
-        # 🔹 Carica il file su S3 (forzando l'uso delle credenziali)
+        # 🔹 Carica il file su S3
         s3.upload_file(csv_path, S3_BUCKET_NAME, f"{S3_FOLDER_PATH}{os.path.basename(csv_path)}")
         print(f"✅ File caricato con successo su S3: s3://{S3_BUCKET_NAME}/{S3_FOLDER_PATH}{os.path.basename(csv_path)}")
     except Exception as e:
         print(f"❌ Errore nel caricamento su S3: {e}")
+
