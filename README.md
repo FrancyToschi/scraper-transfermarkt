@@ -35,5 +35,5 @@ The scraper operates for each season from 2010 to 2024 and collects information 
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/scraper-transfermarkt.git
+   git clone https://github.com/FrancyToschi/scraper-transfermarkt.git
 # scraper-transfermarkt
