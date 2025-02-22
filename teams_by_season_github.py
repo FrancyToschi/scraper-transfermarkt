@@ -233,6 +233,48 @@ if failed_urls:
     print(f"Failed URLs saved to failed_urls.csv")
 
 import boto3
+
+import os
+from datetime import datetime
+import pandas as pd
+
+# Configurazione S3
+S3_BUCKET_NAME = "transfermarkt-raw-data-2025"
+S3_FOLDER_PATH = "Teams-by-season/"  # Percorso su S3
+csv_path = "teams_by_season.csv"  # Nome del file aggiornato
+failed_csv_path = "failed_urls.csv"
+
+# Inizializza il client S3
+s3 = boto3.client('s3')
+
+# Creiamo un timestamp per evitare sovrascritture
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+# ✅ Upload del file teams_by_season.csv se esiste
+if os.path.exists(csv_path):
+    s3_filename = f'{S3_FOLDER_PATH}{timestamp}_teams_by_season.csv'
+    print(f'📤 Caricamento su S3: {csv_path} → s3://{S3_BUCKET_NAME}/{s3_filename}')
+    try:
+        s3.upload_file(csv_path, S3_BUCKET_NAME, s3_filename)
+        print(f'✅ File caricato con successo su S3: s3://{S3_BUCKET_NAME}/{s3_filename}')
+    except Exception as e:
+        print(f'❌ Errore durante il caricamento su S3: {e}')
+else:
+    print(f'❌ Il file {csv_path} non esiste!')
+
+# ✅ Upload del file failed_urls.csv se il DataFrame esiste ed è pieno
+if 'failed_urls' in locals() and isinstance(failed_urls, pd.DataFrame) and not failed_urls.empty:
+    try:
+        failed_urls.to_csv(failed_csv_path, index=False)
+        failed_s3_filename = f'{S3_FOLDER_PATH}{timestamp}_failed_urls.csv'
+        print(f'📄 Salvataggio e upload di {failed_csv_path} su S3')
+        s3.upload_file(failed_csv_path, S3_BUCKET_NAME, failed_s3_filename)
+        print(f'✅ File degli URL falliti caricato su S3: s3://{S3_BUCKET_NAME}/{failed_s3_filename}')
+    except Exception as e:
+        print(f'❌ Errore nel salvataggio o upload di failed_urls.csv: {e}')
+else:
+    print('ℹ️ Nessun URL fallito da salvare.')
+
 import os
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
