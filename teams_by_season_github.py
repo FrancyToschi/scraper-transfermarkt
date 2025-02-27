@@ -281,19 +281,6 @@ AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = "us-east-1"
 
-s3 = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-    region_name=AWS_REGION
-)
-
-# 🔄 Testa la connessione elencando i tuoi bucket
-buckets = s3.list_buckets()
-print("✅ Connessione riuscita! Ecco i tuoi bucket:")
-for bucket in buckets["Buckets"]:
-    print(f"- {bucket['Name']}")
-
 # Configurazione AWS S3
 S3_BUCKET_NAME = "transfermarkt-raw-data-2025"
 S3_FOLDER_PATH = "Teams-by-season/"  # Percorso su S3
