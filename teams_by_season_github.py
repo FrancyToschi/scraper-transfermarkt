@@ -232,60 +232,20 @@ if failed_urls:
     failed_df.to_csv("failed_urls.csv", index=False)
     print(f"Failed URLs saved to failed_urls.csv")
 
-import boto3
+#Salvataggio su s3 - AWS
 
+import boto3
 import os
-from datetime import datetime
 import pandas as pd
 
-# Configurazione S3
-S3_BUCKET_NAME = "transfermarkt-raw-data-2025"
-S3_FOLDER_PATH = "Teams-by-season/"  # Percorso su S3
-csv_path = "teams_by_season.csv"  # Nome del file aggiornato
-failed_csv_path = "failed_urls.csv"
-
-# Inizializza il client S3
-s3 = boto3.client('s3')
-
-# Creiamo un timestamp per evitare sovrascritture
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-# ✅ Upload del file teams_by_season.csv se esiste
-if os.path.exists(csv_path):
-    s3_filename = f'{S3_FOLDER_PATH}{timestamp}_teams_by_season.csv'
-    print(f'📤 Caricamento su S3: {csv_path} → s3://{S3_BUCKET_NAME}/{s3_filename}')
-    try:
-        s3.upload_file(csv_path, S3_BUCKET_NAME, s3_filename)
-        print(f'✅ File caricato con successo su S3: s3://{S3_BUCKET_NAME}/{s3_filename}')
-    except Exception as e:
-        print(f'❌ Errore durante il caricamento su S3: {e}')
-else:
-    print(f'❌ Il file {csv_path} non esiste!')
-
-# ✅ Upload del file failed_urls.csv se il DataFrame esiste ed è pieno
-if 'failed_urls' in locals() and isinstance(failed_urls, pd.DataFrame) and not failed_urls.empty:
-    try:
-        failed_urls.to_csv(failed_csv_path, index=False)
-        failed_s3_filename = f'{S3_FOLDER_PATH}{timestamp}_failed_urls.csv'
-        print(f'📄 Salvataggio e upload di {failed_csv_path} su S3')
-        s3.upload_file(failed_csv_path, S3_BUCKET_NAME, failed_s3_filename)
-        print(f'✅ File degli URL falliti caricato su S3: s3://{S3_BUCKET_NAME}/{failed_s3_filename}')
-    except Exception as e:
-        print(f'❌ Errore nel salvataggio o upload di failed_urls.csv: {e}')
-else:
-    print('ℹ️ Nessun URL fallito da salvare.')
-
-import os
-
+# Configurazione AWS S3
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = "us-east-1"
-
-# Configurazione AWS S3
 S3_BUCKET_NAME = "transfermarkt-raw-data-2025"
 S3_FOLDER_PATH = "Teams-by-season/"  # Percorso su S3
 
-# 🔹 Inizializza il client S3 con credenziali esplicite
+# Inizializza il client S3
 s3 = boto3.client(
     "s3",
     aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -293,13 +253,28 @@ s3 = boto3.client(
     region_name=AWS_REGION
 )
 
-# 🔄 Verifica se il file esiste
-if not os.path.exists(csv_path):
-    print(f"❌ Il file {csv_path} non esiste! Assicurati di averlo salvato prima di caricarlo.")
-else:
+def upload_to_s3(file_path, bucket_name, s3_filename):
+    """Funzione per caricare un file su S3 sovrascrivendolo."""
+    if not os.path.exists(file_path):
+        print(f"❌ Il file {file_path} non esiste! Assicurati di averlo salvato prima di caricarlo.")
+        return
     try:
-        # 🔹 Carica il file su S3 (forzando l'uso delle credenziali)
-        s3.upload_file(csv_path, S3_BUCKET_NAME, f"{S3_FOLDER_PATH}{os.path.basename(csv_path)}")
-        print(f"✅ File caricato con successo su S3: s3://{S3_BUCKET_NAME}/{S3_FOLDER_PATH}{os.path.basename(csv_path)}")
+        s3.upload_file(file_path, bucket_name, s3_filename)
+        print(f"✅ File caricato con successo su S3: s3://{bucket_name}/{s3_filename}")
     except Exception as e:
         print(f"❌ Errore nel caricamento su S3: {e}")
+
+# Caricamento del file teams_by_season.csv
+csv_path = "teams_by_season.csv"
+s3_filename = f"{S3_FOLDER_PATH}{os.path.basename(csv_path)}"
+upload_to_s3(csv_path, S3_BUCKET_NAME, s3_filename)
+
+# Caricamento del file failed_urls.csv se esiste ed è pieno
+failed_csv_path = "failed_urls.csv"
+if 'failed_urls' in locals() and isinstance(failed_urls, pd.DataFrame) and not failed_urls.empty:
+    failed_urls.to_csv(failed_csv_path, index=False)
+    failed_s3_filename = f"{S3_FOLDER_PATH}{os.path.basename(failed_csv_path)}"
+    upload_to_s3(failed_csv_path, S3_BUCKET_NAME, failed_s3_filename)
+else:
+    print("ℹ️ Nessun URL fallito da salvare.")
+
