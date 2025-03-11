@@ -224,7 +224,7 @@ if failed_urls:
 # Salvataggio dei dati in un DataFrame
 if data:
     df = pd.DataFrame(data, columns=["PlayerID", "Name", "ShirtNumber", "Role", "BirthDate", "Value", "SquadName", "SquadID", "Season", "League"])
-    df.to_csv("players_data.csv", index=False)
+    df.to_csv("teams_by_season.csv", index=False)
 
 # Salvataggio degli URL falliti in un DataFrame separato (con colonne corrette)
 if failed_urls:
