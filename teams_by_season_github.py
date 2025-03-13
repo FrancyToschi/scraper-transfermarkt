@@ -64,11 +64,7 @@ def get_squad_urls(url):
 # Parametri principali
 years = ['2010', '2011','2012', '2013','2014', '2015','2016', '2017', '2018', '2019','2020', '2021','2022', '2023','2024']
 leagues = [
-#    {"name": "laliga", "label": "ES1"},
-#   {"name": "premier-league", "label": "GB1"},
-#  {"name": "bundesliga", "label": "L1"},
     {"name": "serie-a", "label": "IT1"}
-#    {"name": "ligue-1", "label": "FR1"}
 ]
 
 # Liste per i dati e gli URL falliti
